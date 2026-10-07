@@ -89,6 +89,10 @@ $ISAACLAB_PY scripts/view_env.py --run_policy 600 --viz kit   # watch the expert
 * The grasp point on the gripper link (`GRASP_POINT_OFFSET`) was calibrated empirically with
   `scripts/calibrate_grasp.py` (sweep offsets, keep what lifts the block); re-run it if you change
   the block size or the robot asset.
+* Measured on the development machine (DGX Spark, PhysX, headless): the expert succeeds on ~75 %
+  of random scenes (6/8 in the probe run), episodes are ~300 frames (10 s at 30 Hz) and an attempt
+  costs ~25 s wall-clock including rendering of both 640×480 cameras. Failed attempts are discarded,
+  so `NUM_EPISODES` counts successful demonstrations.
 
 ## Dataset conventions
 

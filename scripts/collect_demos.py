@@ -63,6 +63,7 @@ with launch_simulation(env_cfg, args):
         writer.start_episode()
         success_count = 0
         outcome = "timeout"
+        cube_b0 = mdp.object_pose_in_base(env, __import__("isaaclab.managers", fromlist=["SceneEntityCfg"]).SceneEntityCfg("cube"))[0].cpu().numpy()
         for t in range(args.max_steps):
             state = robot.data.joint_pos.torch[0, jidx].cpu().numpy()
             images = {k: c.data.output["rgb"][0, :, :, :3].cpu().numpy().astype(np.uint8) for k, c in cams.items()}
@@ -88,8 +89,11 @@ with launch_simulation(env_cfg, args):
         if outcome == "success":
             successes += 1
         el = time.time() - t_start
+        import isaaclab.utils.math as _mu
+        _, _, yaw0 = _mu.euler_xyz_from_quat(torch.as_tensor(cube_b0[3:7]).unsqueeze(0))
         print(
-            f"[collect] attempt {attempts}: {outcome:8s} steps={t + 1:3d} kept={'ep%06d' % ep if ep is not None else '-'} "
+            f"[collect] attempt {attempts}: {outcome:8s} steps={t + 1:3d} retries={int(policy.retries[0])} "
+            f"cube_b=({cube_b0[0]:+.3f},{cube_b0[1]:+.3f}) yaw={float(yaw0[0]):+.2f} kept={'ep%06d' % ep if ep is not None else '-'} "
             f"| {writer.num_episodes}/{target_total} episodes, {successes}/{attempts} success, {el / 60:.1f} min",
             flush=True,
         )
