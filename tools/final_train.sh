@@ -2,6 +2,7 @@
 # Final run on the VM: Cosmos Reason curation -> prepare -> two parallel GR00T trainings.
 #   main     = sim (flyer) + real, each curated by Cosmos 3 Reasoner  -> $WORK/finetune/main
 #   ablation = same sources without the Cosmos curation               -> $WORK/finetune/ablation
+# The two runs go one after the other (one run at batch 16 needs ~59 GB).
 # Expects the Cosmos Reason server on :8000 for the scoring step (stopped afterwards to free the GPU).
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -27,10 +28,12 @@ for s in "${SOURCES[@]}"; do
 done
 join() { local IFS=:; echo "$*"; }
 
-echo "== 3. two trainings in parallel ($STEPS steps each)"
-for run in main ablation; do
-    if [ $run = main ]; then ds=$(join "${main_paths[@]}"); else ds=$(join "${abl_paths[@]}"); fi
-    rm -rf "$WORK/finetune/$run"
-    tmux new -d -s "train_$run" "cd $PWD && source env.sh && FINETUNE_OUTPUT=$WORK/finetune/$run TRAIN_DATASET='$ds' MAX_STEPS=$STEPS SAVE_STEPS=500 GLOBAL_BATCH_SIZE=16 ./finetune.sh > logs/train_$run.log 2>&1; echo FERTIG >> logs/train_$run.log; sleep 86400"
-    echo "started train_$run on $ds"
-done
+echo "== 3. trainings: main, then ablation (one GPU fits one run at batch 16)"
+main_ds=$(join "${main_paths[@]}")
+abl_ds=$(join "${abl_paths[@]}")
+rm -rf "$WORK/finetune/main" "$WORK/finetune/ablation"
+tmux new -d -s train_final "cd $PWD && source env.sh && \
+  FINETUNE_OUTPUT=$WORK/finetune/main TRAIN_DATASET='$main_ds' MAX_STEPS=${MAIN_STEPS:-1500} SAVE_STEPS=500 ./finetune.sh > logs/train_main.log 2>&1; echo FERTIG >> logs/train_main.log; \
+  FINETUNE_OUTPUT=$WORK/finetune/ablation TRAIN_DATASET='$abl_ds' MAX_STEPS=${ABL_STEPS:-1000} SAVE_STEPS=500 ./finetune.sh > logs/train_ablation.log 2>&1; echo FERTIG >> logs/train_ablation.log; sleep 86400"
+echo "started: main on $main_ds"
+echo "         ablation on $abl_ds"

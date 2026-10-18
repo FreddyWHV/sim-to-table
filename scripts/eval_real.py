@@ -3,7 +3,7 @@
 The policy server runs on the Nebius VM (``start_server.sh``, bound to localhost); reach it through
 an SSH tunnel first:
 
-    ssh -N -L 5555:localhost:5555 ubuntu@<vm-ip>
+    ssh -N -L 5556:localhost:5556 ubuntu@<vm-ip>
 
 then, on the laptop with both cameras and the follower arm plugged in:
 
@@ -31,12 +31,12 @@ from so101_pickplace.so101_units import FEATURE_NAMES  # noqa: E402
 CAMERA_KEYS = ("front", "side")
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument("--port", required=True, help="Follower arm serial port, e.g. /dev/cu.usbmodem5A7A0557971")
+parser.add_argument("--port", default="/dev/tty.usbmodem5A7A0557971", help="Follower arm serial port")
 parser.add_argument("--robot_id", default="station_follower", help="LeRobot calibration id of the follower")
-parser.add_argument("--front", required=True, help="OpenCV index or path of the front camera")
-parser.add_argument("--side", required=True, help="OpenCV index or path of the side camera")
+parser.add_argument("--front", default="1", help="OpenCV index or path of the front camera")
+parser.add_argument("--side", default="0", help="OpenCV index or path of the side camera")
 parser.add_argument("--policy_host", default="localhost")
-parser.add_argument("--policy_port", type=int, default=5555)
+parser.add_argument("--policy_port", type=int, default=5556)
 parser.add_argument("--action_horizon", type=int, default=8, help="Predicted steps executed per policy query.")
 parser.add_argument("--task_text", default="pick up the blue block and place it on the flyer")
 parser.add_argument("--timeout_s", type=float, default=120.0, help="Stop after this long (judges cap a trial at 2 min).")

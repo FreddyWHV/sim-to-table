@@ -27,7 +27,7 @@ export EMBODIMENT_TAG=NEW_EMBODIMENT
 export FINETUNE_OUTPUT="${FINETUNE_OUTPUT:-$WORK/finetune/$DATASET_NAME}"
 export CHECKPOINT="${CHECKPOINT:-}"           # set to $FINETUNE_OUTPUT/checkpoint-<N> for start_server.sh
 export POLICY_HOST=localhost
-export POLICY_PORT=5555
+export POLICY_PORT="${POLICY_PORT:-5556}"  # 5555 is taken by nv-hostengine (DCGM) on the Nebius VM
 
 # N1.7 loads the gated nvidia/Cosmos-Reason2-2B backbone from the Hub (do not set HF_HUB_OFFLINE)
 unset HF_HUB_OFFLINE
