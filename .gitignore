@@ -8,3 +8,4 @@ datasets/
 finetune/
 .venv/
 .env
+.venv-lerobot/
