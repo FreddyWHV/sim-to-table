@@ -1,22 +1,22 @@
 {
   "policy": "GR00T N1.7-3B post-trained (NEW_EMBODIMENT), cameras front + side, LeRobot v2.1 data",
   "main_checkpoint": {
-    "run": "main_real",
+    "run": "main_final",
     "path": "checkpoints/main",
-    "source_checkpoint": "/home/ubuntu/work/finetune/main_real/checkpoint-500",
+    "source_checkpoint": "/home/ubuntu/work/finetune/main_final/checkpoint-600",
     "episodes": {
       "sim_isaac_raw": 0,
       "cosmos_transfer_augmented": 0,
-      "real_teleop": 32
+      "real_teleop": 35
     },
-    "total_episodes": 32,
+    "total_episodes": 35,
     "datasets": {
       "station_real_curated": {
         "episodes": 19,
         "sampling_weight": 1
       },
       "station_real_v2_curated": {
-        "episodes": 13,
+        "episodes": 16,
         "sampling_weight": 2
       }
     },

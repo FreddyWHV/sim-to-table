@@ -10,3 +10,5 @@
 [curate] wrote /home/ubuntu/work/datasets/local/cube40_a_curated (15 episodes, 5351 frames)
 [curate] cube40_b: keep 15/15 episodes
 [curate] wrote /home/ubuntu/work/datasets/local/cube40_b_curated (15 episodes, 5351 frames)
+[curate] station_real_v2: keep 16/17 episodes (dropped by hand: [13])
+[curate] wrote /home/ubuntu/work/datasets/local/station_real_v2_curated (16 episodes, 9151 frames)
