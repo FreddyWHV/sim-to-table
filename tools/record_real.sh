@@ -2,7 +2,8 @@
 # Record real teleop episodes at the station into datasets/real/station_real (LeRobot v3, local only).
 #   tools/record_real.sh 3            # 3 episodes (first test)
 #   RESUME=true tools/record_real.sh 10   # append 10 more to the same dataset
-# Keys during recording: Right arrow = episode done early, Left arrow = redo episode, Esc = stop.
+# Keys (terminal focused): n or Right = episode done, r or Left = redo episode, q or Esc = stop.
+# Videos are h264 like the sim dataset (GR00T and Cosmos decode it; the LeRobot default is AV1).
 # Joint units use_degrees=false on both arms: same [-100, 100] convention as the sim dataset.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -20,4 +21,5 @@ exec .venv-lerobot/bin/lerobot-record \
     --dataset.repo_id=local/station_real --dataset.root="$PWD/datasets/real/station_real" \
     --dataset.single_task="$TASK" --dataset.num_episodes="$N" --dataset.fps=30 \
     --dataset.episode_time_s=25 --dataset.reset_time_s=10 \
+    --dataset.rgb_encoder.vcodec=h264 \
     --dataset.push_to_hub=false --resume="${RESUME:-false}"
