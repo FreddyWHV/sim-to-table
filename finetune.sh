@@ -7,7 +7,11 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 DS="${TRAIN_DATASET:-$DATASET_ROOT}"
-[ -f "$DS/meta/modality.json" ] && [ -f "$DS/meta/stats.json" ] || { echo "dataset not prepared at $DS - run prepare_dataset.sh" >&2; exit 1; }
+# DS may list several datasets separated by ":" (GR00T mixes them)
+IFS=: read -ra _ds_list <<< "$DS"
+for _d in "${_ds_list[@]}"; do
+    [ -f "$_d/meta/modality.json" ] && [ -f "$_d/meta/stats.json" ] || { echo "dataset not prepared at $_d - run prepare_dataset.sh" >&2; exit 1; }
+done
 [ -f "$BASE_MODEL/config.json" ] || { echo "base model missing at $BASE_MODEL" >&2; exit 1; }
 mkdir -p "$FINETUNE_OUTPUT"
 gr00t_activate
