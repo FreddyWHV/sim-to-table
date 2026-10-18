@@ -57,7 +57,9 @@ A second problem showed up in an open-loop check against recorded episodes (`too
 value (shoulder lift −196 at a rest pose of −98), which drives the arm into its limits whatever the training data.
 The final run therefore uses absolute arm actions. Replaying a recorded episode on the arm (`lerobot-replay`) works,
 so arm, calibration and recordings are fine; the open-loop error of the absolute checkpoint at step 500 was still high
-(MAE ≈ 39 in [−100, 100] units on a training episode), so policy quality on the real arm is the open issue.
+(MAE ≈ 39 in [−100, 100] units on a training episode), so policy quality on the real arm is the open issue. The final `main_final` (600 steps, mean train loss 1.0) did not
+grasp on the real arm in three trials: its targets jump between the edges of the recorded joint ranges, i.e. the
+action head had not converged yet. Next steps: a sim→real joint mapping, then absolute actions with far more steps.
 Fixing the joint mapping in `scripts/hdf5_to_lerobot.py` / the collector is the first next step; the 40 mm sim episodes
 (`tools/collect_cube40.sh`, `cube40_a`, `cube40_b`) can then be reused.
 
