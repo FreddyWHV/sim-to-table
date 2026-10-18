@@ -5,7 +5,7 @@
 # Versions match the machine this project was developed on (Isaac Sim 6.1.0, Isaac Lab 3.0.0, Python 3.12).
 set -euo pipefail
 WORK="${WORK:-$HOME/work}"
-REPO_URL="${REPO_URL:-https://github.com/ddiddi/so101-sim-pickplace-gr00t.git}"
+REPO_URL="${REPO_URL:-https://github.com/FreddyWHV/sim-to-table.git}"
 mkdir -p "$WORK" && cd "$WORK"
 
 sudo apt-get update
@@ -18,20 +18,26 @@ python3.12 -m venv env_isaaclab && source env_isaaclab/bin/activate
 pip install --upgrade pip
 pip install "isaacsim[all,extscache]==6.1.0" --extra-index-url https://pypi.nvidia.com
 export OMNI_KIT_ACCEPT_EULA=YES
-git clone https://github.com/isaac-sim/IsaacLab.git && cd IsaacLab && git checkout v3.0.0 && ./isaaclab.sh --install && cd ..
+# no v3.0.0 tag upstream; develop moved to Isaac Sim 6.2 + uv-only. c9a40a1de0 = last 3.0.0 commit for Isaac Sim 6.1 with isaaclab.sh
+[ -d IsaacLab ] || git clone https://github.com/isaac-sim/IsaacLab.git
+cd IsaacLab
+git checkout "${ISAACLAB_REF:-c9a40a1de0}"
+./isaaclab.sh --install
+cd "$WORK"
 pip install pyzmq msgpack msgpack-numpy h5py imageio pyarrow
 deactivate
 
 # --- Isaac-GR00T N1.7 --------------------------------------------------------------------------
 curl -LsSf https://astral.sh/uv/install.sh | sh; export PATH="$HOME/.local/bin:$PATH"
-git clone --recurse-submodules https://github.com/NVIDIA/Isaac-GR00T.git && cd Isaac-GR00T
+[ -d Isaac-GR00T ] || git clone --recurse-submodules https://github.com/NVIDIA/Isaac-GR00T.git
+cd Isaac-GR00T
 uv sync --python 3.12
 uv run huggingface-cli login      # Cosmos-Reason2-2B backbone is gated: accept its terms on the Hub first
 uv run hf download nvidia/GR00T-N1.7-3B --local-dir checkpoints/GR00T-N1.7-3B
-cd ..
+cd "$WORK"
 
 # --- this project --------------------------------------------------------------------------------
-git clone "$REPO_URL" so101_sim_pickplace
+[ -d so101_sim_pickplace ] || git clone "$REPO_URL" so101_sim_pickplace
 cat <<EOT
 
 Done. Edit so101_sim_pickplace/env.sh so that
