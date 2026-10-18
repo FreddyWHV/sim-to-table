@@ -1,5 +1,7 @@
 #!/bin/bash
 # Terminal 1: GR00T N1.7 policy server for the fine-tuned checkpoint.
+# Binds to 127.0.0.1 by default (the VM has a public IP); reach it from the laptop via
+#   ssh -L 5555:localhost:5555 ubuntu@<vm-ip>   or set POLICY_BIND_HOST explicitly.
 #   CHECKPOINT=$FINETUNE_OUTPUT/checkpoint-4000 ./start_server.sh
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
@@ -13,4 +15,4 @@ exec python gr00t/eval/run_gr00t_server.py \
     --model-path "$CHECKPOINT" \
     --modality-config-path "$MODALITY_CONFIG" \
     --embodiment-tag "$EMBODIMENT_TAG" \
-    --device cuda --host 0.0.0.0 --port "$POLICY_PORT" "$@"
+    --device cuda --host "${POLICY_BIND_HOST:-127.0.0.1}" --port "$POLICY_PORT" "$@"
