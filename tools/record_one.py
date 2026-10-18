@@ -34,5 +34,7 @@ def _init_line_listener():
     return _LineListener(), events
 
 
-rec.init_keyboard_listener = _init_line_listener
-sys.exit(rec.main())
+# The guard matters: the video encoder pool spawns workers that re-import this file on macOS.
+if __name__ == "__main__":
+    rec.init_keyboard_listener = _init_line_listener
+    sys.exit(rec.main())
