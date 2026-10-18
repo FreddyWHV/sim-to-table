@@ -9,7 +9,7 @@
     },
     "video": {
         "front": {"original_key": "observation.images.front"},
-        "wrist": {"original_key": "observation.images.wrist"}
+        "side": {"original_key": "observation.images.side"}
     },
     "annotation": {
         "human.task_description": {"original_key": "task_index"}

@@ -16,7 +16,7 @@ from _common import build_env_cfg, launch_simulation, make_parser, parse_args
 parser = make_parser(__doc__)
 parser.add_argument("--num_episodes", type=int, default=50, help="Successful episodes to record.")
 parser.add_argument("--dataset_root", type=str, required=True)
-parser.add_argument("--task_text", type=str, default="pick up the red block and place it on the green pad")
+parser.add_argument("--task_text", type=str, default="pick up the blue block and place it on the green pad")
 parser.add_argument("--max_steps", type=int, default=600, help="Per-episode step cap (30 Hz).")
 parser.add_argument("--success_steps", type=int, default=15, help="Consecutive success steps before ending an episode.")
 parser.add_argument("--resume", action="store_true")
@@ -45,10 +45,10 @@ with launch_simulation(env_cfg, args):
     robot = env.scene["robot"]
     jidx, _ = robot.find_joints(JOINTS, preserve_order=True)
     jidx = torch.as_tensor(jidx, device=env.device)
-    cams = {k: env.scene[f"{k}_cam"] for k in ("front", "wrist")}
+    cams = {k: env.scene[f"{k}_cam"] for k in ("front", "side")}
 
     writer = LeRobotV21Writer(
-        args.dataset_root, task=args.task_text, fps=30, video_keys=("front", "wrist"),
+        args.dataset_root, task=args.task_text, fps=30, video_keys=("front", "side"),
         image_hw=(IMAGE_HEIGHT, IMAGE_WIDTH), feature_names=FEATURE_NAMES, resume=args.resume,
     )
     policy = ScriptedPickPlace(env, ScriptedPolicyCfg(cube_size=CUBE_SIZE, pad_thickness=PAD_SIZE[2]))

@@ -4,7 +4,7 @@ Start the policy server first (``start_server.sh``), then:
 
     python scripts/eval_in_sim.py --num_episodes 20 --task_text "..." [--viz kit] [--record_dir logs/eval]
 
-Observations are built exactly like the dataset (front/wrist 640x480 RGB, state in LeRobot
+Observations are built exactly like the dataset (front/side 640x480 RGB, state in LeRobot
 normalised units); the returned action chunk (``single_arm`` 16x5, ``gripper`` 16x1) is converted
 back to radians and executed on the joint-space env for ``--action_horizon`` steps per query.
 """
@@ -18,7 +18,7 @@ from _common import PROJECT_ROOT, build_env_cfg, launch_simulation, make_parser,
 
 parser = make_parser(__doc__)
 parser.add_argument("--num_episodes", type=int, default=10)
-parser.add_argument("--task_text", type=str, default="pick up the red block and place it on the green pad")
+parser.add_argument("--task_text", type=str, default="pick up the blue block and place it on the green pad")
 parser.add_argument("--policy_host", type=str, default="localhost")
 parser.add_argument("--policy_port", type=int, default=5555)
 parser.add_argument("--action_horizon", type=int, default=8, help="Predicted steps executed per policy query.")
@@ -47,7 +47,7 @@ with launch_simulation(env_cfg, args):
         raise SystemExit(f"policy server not reachable at {args.policy_host}:{args.policy_port} (run start_server.sh)")
     mc = client.get_modality_config()
     print("[eval] server modality config:", {k: v.get("modality_keys") for k, v in mc.items()})
-    expected = {"video": ["front", "wrist"], "state": ["single_arm", "gripper"], "action": ["single_arm", "gripper"]}
+    expected = {"video": ["front", "side"], "state": ["single_arm", "gripper"], "action": ["single_arm", "gripper"]}
     got = {k: list(mc[k]["modality_keys"]) for k in expected}
     if got != expected:
         raise SystemExit(f"checkpoint modality layout {got} != {expected}")
@@ -57,7 +57,7 @@ with launch_simulation(env_cfg, args):
     robot = env.scene["robot"]
     jidx, _ = robot.find_joints(JOINTS, preserve_order=True)
     jidx = torch.as_tensor(jidx, device=env.device)
-    cams = {k: env.scene[f"{k}_cam"] for k in ("front", "wrist")}
+    cams = {k: env.scene[f"{k}_cam"] for k in ("front", "side")}
     rec = None
     if args.record_dir:
         import subprocess
@@ -68,7 +68,7 @@ with launch_simulation(env_cfg, args):
         state = rad_to_norm(robot.data.joint_pos.torch[0, jidx].cpu().numpy())
         imgs = {k: c.data.output["rgb"].torch[0, :, :, :3].cpu().numpy().astype(np.uint8) for k, c in cams.items()}
         obs = {
-            "video": {"front": np.ascontiguousarray(imgs["front"]), "wrist": np.ascontiguousarray(imgs["wrist"])},
+            "video": {"front": np.ascontiguousarray(imgs["front"]), "side": np.ascontiguousarray(imgs["side"])},
             "state": {"single_arm": state[:5].astype(np.float32), "gripper": state[5:6].astype(np.float32)},
             "language": {"annotation.human.task_description": args.task_text},
         }

@@ -1,9 +1,10 @@
 """SO-101 single-block pick-and-place environment for GR00T N1.7 post-training data.
 
-Scene: SO-101 follower seated on the SeattleLab table (same seat pose as the contrib cube-stack
-task), one red block, one flat green target pad, a fixed third-person ``front`` camera and a
-``wrist`` camera on the gripper link -- the two views the SO-100/SO-101 GR00T modality config
-(``examples/SO100/so100_config.py``) expects.
+Scene: SO-101 follower inside the white hackathon light box (dimensions of ``lightbox-simple.usd``
+from isaac-sim/Sim-to-Real-SO-101-Workshop), one blue block, one flat green target pad and two
+fixed cameras on the top edges of the box walls: ``front`` on the wall facing the arm, ``side`` on
+the wall to the arm's right. This replaces the starter repo's SeattleLab table and wrist camera so
+the scene matches the real station.
 
 Three variants share the scene and differ only in the action space:
 
@@ -38,7 +39,6 @@ from isaaclab.sensors import CameraCfg, FrameTransformerCfg
 from isaaclab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from isaaclab.utils import configclass
-from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 from isaaclab_assets.robots.so101 import SO101_HIGH_PD_CFG
 from isaaclab_tasks.contrib.stack.config.so101.pose_ik_action import SO101PoseIKActionCfg
@@ -63,7 +63,7 @@ IMAGE_WIDTH = 640
 # SO-100/101 grippers; override with CUBE_SIZE_MM=25|30|40 and CUBE_COLOR=red|green|blue|yellow.
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 CUBE_SIZE_MM = int(os.environ.get("CUBE_SIZE_MM", "30"))
-CUBE_COLOR = os.environ.get("CUBE_COLOR", "red")
+CUBE_COLOR = os.environ.get("CUBE_COLOR", "blue")
 CUBE_USD = os.path.join(ASSETS_DIR, "cube_blocks", "usd", f"cube_{CUBE_SIZE_MM}mm_{CUBE_COLOR}.usda")
 CUBE_SIZE = CUBE_SIZE_MM / 1000.0
 PAD_SIZE = (0.09, 0.09, 0.004)
@@ -98,15 +98,21 @@ SO101_INIT_JOINT_POS: dict[str, float] = {
 # origin). Success region ~+-1 cm in each axis for the 30 mm block.
 GRASP_POINT_OFFSET = (-0.008 + CUBE_SIZE / 2 + 0.0125, 0.005, -0.062)
 
-# Wrist camera on the lateral (-Y) side of the gripper link, looking down the jaws so both jaws and
-# the block between them are in view. Position [m] + orientation (xyzw) in the link frame, "world"
-# camera convention (camera forward +X, up +Z).
-WRIST_CAM_POS = (0.0, -0.045, -0.03)
-WRIST_CAM_FORWARD = (0.0, 0.045, -0.055)  # from the mount toward the jaw tips
+# Light box (inner size of lightbox-simple.usd: 0.506 deep, 0.762 wide, 0.508 high). The arm sits at
+# the side that is open in the workshop model and closed with a white backdrop at the real station.
+BOX_X_MIN, BOX_X_MAX = -0.10, 0.406
+BOX_Y_HALF = 0.381
+BOX_HEIGHT = 0.508
+BOX_WALL = 0.006
+BOX_WHITE = (0.92, 0.92, 0.92)
 
-# Front camera: in front of the table, looking back at the arm and both objects.
-FRONT_CAM_POS = (0.80, 0.0, 0.42)
-FRONT_CAM_LOOK_AT = (0.18, 0.0, 0.02)
+# Both cameras sit on the top edge of a wall, centred on it. Look-at points and focal length are
+# matched by eye against Photo Booth frames of the real station (logs/station/real).
+CAM_FOCAL_LENGTH = float(os.environ.get("CAM_FOCAL_LENGTH", "15.0"))
+FRONT_CAM_POS = (BOX_X_MAX - 0.01, 0.0, BOX_HEIGHT + 0.02)
+FRONT_CAM_LOOK_AT = (0.05, 0.0, 0.0)
+SIDE_CAM_POS = ((BOX_X_MIN + BOX_X_MAX) / 2, -BOX_Y_HALF + 0.01, BOX_HEIGHT + 0.02)
+SIDE_CAM_LOOK_AT = (0.32, -0.04, 0.0)
 
 
 def quat_xyzw_from_rpy(roll: float, pitch: float, yaw: float) -> tuple[float, float, float, float]:
@@ -121,45 +127,30 @@ def quat_xyzw_from_rpy(roll: float, pitch: float, yaw: float) -> tuple[float, fl
     return (x, y, z, w)
 
 
-def quat_xyzw_from_forward_up(forward, up) -> tuple[float, float, float, float]:
-    """Quaternion (xyzw) whose +X maps to ``forward`` and +Z to ``up`` (Gram-Schmidt on ``up``)."""
-    f = [float(v) for v in forward]
-    n = math.sqrt(sum(v * v for v in f))
-    f = [v / n for v in f]
-    u = [float(v) for v in up]
-    d = sum(a * b for a, b in zip(u, f))
-    u = [a - d * b for a, b in zip(u, f)]
-    n = math.sqrt(sum(v * v for v in u))
-    u = [v / n for v in u]
-    # left = up x forward  (right-handed: x=forward, y=left, z=up)
-    l = [u[1] * f[2] - u[2] * f[1], u[2] * f[0] - u[0] * f[2], u[0] * f[1] - u[1] * f[0]]
-    m = [[f[0], l[0], u[0]], [f[1], l[1], u[1]], [f[2], l[2], u[2]]]  # columns = axes
-    tr = m[0][0] + m[1][1] + m[2][2]
-    if tr > 0:
-        s_ = math.sqrt(tr + 1.0) * 2
-        w, x, y, z = 0.25 * s_, (m[2][1] - m[1][2]) / s_, (m[0][2] - m[2][0]) / s_, (m[1][0] - m[0][1]) / s_
-    elif m[0][0] > m[1][1] and m[0][0] > m[2][2]:
-        s_ = math.sqrt(1.0 + m[0][0] - m[1][1] - m[2][2]) * 2
-        w, x, y, z = (m[2][1] - m[1][2]) / s_, 0.25 * s_, (m[0][1] + m[1][0]) / s_, (m[0][2] + m[2][0]) / s_
-    elif m[1][1] > m[2][2]:
-        s_ = math.sqrt(1.0 + m[1][1] - m[0][0] - m[2][2]) * 2
-        w, x, y, z = (m[0][2] - m[2][0]) / s_, (m[0][1] + m[1][0]) / s_, 0.25 * s_, (m[1][2] + m[2][1]) / s_
-    else:
-        s_ = math.sqrt(1.0 + m[2][2] - m[0][0] - m[1][1]) * 2
-        w, x, y, z = (m[1][0] - m[0][1]) / s_, (m[0][2] + m[2][0]) / s_, (m[1][2] + m[2][1]) / s_, 0.25 * s_
-    return (x, y, z, w)
-
-
-# camera "up" = the jaw direction rotated 90 deg in the y-z plane (image up ~ along -Z of the link)
-WRIST_CAM_ROT = quat_xyzw_from_forward_up(WRIST_CAM_FORWARD, (0.0, WRIST_CAM_FORWARD[2], -WRIST_CAM_FORWARD[1]))
-
-
 def look_at_quat_xyzw(eye: tuple[float, float, float], target: tuple[float, float, float]) -> tuple[float, float, float, float]:
     """Orientation (xyzw, "world" camera convention: forward +X, up +Z) looking from ``eye`` at ``target``."""
     dx, dy, dz = (t - e for t, e in zip(target, eye))
     yaw = math.atan2(dy, dx)
     pitch = -math.atan2(dz, math.hypot(dx, dy))
     return quat_xyzw_from_rpy(0.0, pitch, yaw)
+
+
+def _box_panel(name: str, size: tuple[float, float, float], pos: tuple[float, float, float], collide: bool) -> AssetBaseCfg:
+    """Static white panel of the light box (only the floor needs collision)."""
+    return AssetBaseCfg(
+        prim_path=f"{{ENV_REGEX_NS}}/LightBox/{name}",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=pos),
+        spawn=sim_utils.CuboidCfg(
+            size=size,
+            collision_props=sim_utils.CollisionPropertiesCfg() if collide else None,
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=BOX_WHITE, roughness=0.9),
+            semantic_tags=[("class", "table" if name == "Floor" else "wall")],
+        ),
+    )
+
+
+_BOX_DEPTH = BOX_X_MAX - BOX_X_MIN
+_BOX_X_MID = (BOX_X_MIN + BOX_X_MAX) / 2
 
 
 ##
@@ -169,19 +160,16 @@ def look_at_quat_xyzw(eye: tuple[float, float, float], target: tuple[float, floa
 
 @configclass
 class PickPlaceSceneCfg(InteractiveSceneCfg):
-    """Table, SO-101, one block, one target pad, two cameras."""
+    """Light box, SO-101, one block, one target pad, two fixed cameras."""
 
     robot: ArticulationCfg = MISSING
     ee_frame: FrameTransformerCfg = MISSING
 
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0, 0, 0.707, 0.707]),
-        spawn=UsdFileCfg(
-            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
-            semantic_tags=[("class", "table")],
-        ),
-    )
+    box_floor = _box_panel("Floor", (_BOX_DEPTH, 2 * BOX_Y_HALF, 0.02), (_BOX_X_MID, 0.0, -0.01), collide=True)
+    box_back = _box_panel("Back", (BOX_WALL, 2 * BOX_Y_HALF, BOX_HEIGHT), (BOX_X_MIN - BOX_WALL / 2, 0.0, BOX_HEIGHT / 2), False)
+    box_far = _box_panel("Far", (BOX_WALL, 2 * BOX_Y_HALF, BOX_HEIGHT), (BOX_X_MAX + BOX_WALL / 2, 0.0, BOX_HEIGHT / 2), False)
+    box_left = _box_panel("Left", (_BOX_DEPTH, BOX_WALL, BOX_HEIGHT), (_BOX_X_MID, BOX_Y_HALF + BOX_WALL / 2, BOX_HEIGHT / 2), False)
+    box_right = _box_panel("Right", (_BOX_DEPTH, BOX_WALL, BOX_HEIGHT), (_BOX_X_MID, -BOX_Y_HALF - BOX_WALL / 2, BOX_HEIGHT / 2), False)
     plane = AssetBaseCfg(
         prim_path="/World/GroundPlane",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, -1.05]),
@@ -225,20 +213,20 @@ class PickPlaceSceneCfg(InteractiveSceneCfg):
         width=IMAGE_WIDTH,
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
-            focal_length=18.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.05, 5.0)
+            focal_length=CAM_FOCAL_LENGTH, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.05, 5.0)
         ),
         offset=CameraCfg.OffsetCfg(pos=FRONT_CAM_POS, rot=look_at_quat_xyzw(FRONT_CAM_POS, FRONT_CAM_LOOK_AT), convention="world"),
     )
-    wrist_cam = CameraCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/gripper/wrist_cam",
+    side_cam = CameraCfg(
+        prim_path="{ENV_REGEX_NS}/side_cam",
         update_period=0.0,
         height=IMAGE_HEIGHT,
         width=IMAGE_WIDTH,
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
-            focal_length=14.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.02, 3.0)
+            focal_length=CAM_FOCAL_LENGTH, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.05, 5.0)
         ),
-        offset=CameraCfg.OffsetCfg(pos=WRIST_CAM_POS, rot=WRIST_CAM_ROT, convention="world"),
+        offset=CameraCfg.OffsetCfg(pos=SIDE_CAM_POS, rot=look_at_quat_xyzw(SIDE_CAM_POS, SIDE_CAM_LOOK_AT), convention="world"),
     )
 
 
@@ -280,8 +268,8 @@ class ObservationsCfg:
         front = ObsTerm(
             func=base_mdp.image_rgb, params={"sensor_cfg": SceneEntityCfg("front_cam"), "data_type": "rgb", "normalize": False}
         )
-        wrist = ObsTerm(
-            func=base_mdp.image_rgb, params={"sensor_cfg": SceneEntityCfg("wrist_cam"), "data_type": "rgb", "normalize": False}
+        side = ObsTerm(
+            func=base_mdp.image_rgb, params={"sensor_cfg": SceneEntityCfg("side_cam"), "data_type": "rgb", "normalize": False}
         )
 
         def __post_init__(self):
@@ -347,7 +335,7 @@ class SO101PickPlaceBaseEnvCfg(ManagerBasedRLEnvCfg):
     gripper_joint_names: list[str] = ["gripper"]
     gripper_open_val: float = GRIPPER_OPEN_RAD
     gripper_close_val: float = GRIPPER_CLOSE_RAD
-    image_obs_list: list[str] = ["front", "wrist"]
+    image_obs_list: list[str] = ["front", "side"]
 
     def __post_init__(self):
         # 30 Hz control (LeRobot datasets are 30 fps), 60 Hz physics, render every control step.
@@ -373,6 +361,8 @@ class SO101PickPlaceBaseEnvCfg(ManagerBasedRLEnvCfg):
                     "Physics": "physx",
                 },
                 semantic_tags=[("class", "robot")],
+                # the station arm is printed in white PLA
+                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.9, 0.9, 0.88), roughness=0.6),
             ),
             init_state=ArticulationCfg.InitialStateCfg(
                 pos=_SO101_BASE_SEAT_POS, rot=_SO101_BASE_SEAT_ROT, joint_pos=SO101_INIT_JOINT_POS

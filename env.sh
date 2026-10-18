@@ -14,7 +14,7 @@ export OMNI_KIT_ACCEPT_EULA=YES
 export PYTHONPATH="$PROJECT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 # Task + dataset
-export TASK="${TASK:-pick up the red block and place it on the green pad}"
+export TASK="${TASK:-pick up the blue block and place it on the green pad}"
 export DATASETS_DIR=$WORK/datasets
 export DATASET_NAME="${DATASET_NAME:-so101_sim_pickplace}"
 export DATASET_ROOT=$DATASETS_DIR/local/$DATASET_NAME

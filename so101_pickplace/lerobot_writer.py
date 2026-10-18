@@ -55,7 +55,7 @@ class LeRobotV21Writer:
         root: str | os.PathLike,
         task: str,
         fps: int = 30,
-        video_keys: tuple[str, ...] = ("front", "wrist"),
+        video_keys: tuple[str, ...] = ("front", "side"),
         image_hw: tuple[int, int] = (480, 640),
         feature_names: tuple[str, ...] = (),
         robot_type: str = "so101_follower",

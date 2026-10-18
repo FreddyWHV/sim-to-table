@@ -1,7 +1,7 @@
 """Diagnostics for the SO-101 pick-and-place scene.
 
 Prints the joint order / limits / body names, the grasp-point and jaw poses in the base frame,
-saves the front and wrist camera images, and (optionally) runs the scripted expert while dumping
+saves the front and side camera images, and (optionally) runs the scripted expert while dumping
 frames -- used to tune the constants at the top of ``pickplace_env_cfg.py``.
 
     python scripts/view_env.py                      # headless, prints + saves logs/view/*.png
@@ -129,7 +129,7 @@ with launch_simulation(env_cfg, args):
     print("=== obs shapes:", {k: tuple(v.shape) for k, v in obs["policy"].items()})
 
     def save_images(tag: str):
-        for cam in ("front", "wrist"):
+        for cam in ("front", "side"):
             img = env.scene[f"{cam}_cam"].data.output["rgb"].torch[0, :, :, :3].cpu().numpy().astype(np.uint8)
             imageio.imwrite(os.path.join(args.out_dir, f"{tag}_{cam}.png"), img)
 
