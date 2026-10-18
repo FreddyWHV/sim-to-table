@@ -42,7 +42,7 @@ for i in $(seq 1 "$N"); do
         --dataset.episode_time_s=30 --dataset.reset_time_s=0 \
         --dataset.rgb_encoder.vcodec=h264 \
         --dataset.push_to_hub=false --resume="$resume" 2>&1 \
-        | grep --line-buffered -E ">>>|Recording episode|Re-record|Exiting loop|Stopping|ERROR|Traceback" || true
+        | grep --line-buffered -E ">>>|Recording episode|Re-record|Exiting loop|Stopping|ERROR" || true
     echo "Gespeichert: $(count_episodes) Episoden."
 done
 echo "Fertig. Datensatz: $ROOT ($(count_episodes) Episoden)"
