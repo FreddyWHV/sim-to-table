@@ -21,6 +21,7 @@ parser.add_argument("--scores", required=True)
 parser.add_argument("--src", required=True)
 parser.add_argument("--dst", required=True)
 parser.add_argument("--min_clean", type=int, default=3)
+parser.add_argument("--drop", type=int, nargs="*", default=[], help="Episode indices dropped by hand (e.g. hardware fault during recording).")
 args = parser.parse_args()
 
 name = os.path.basename(args.src.rstrip("/"))
@@ -28,6 +29,8 @@ scores = {e["episode_index"]: e for e in json.load(open(args.scores))["episodes"
 
 
 def keep(ep: int) -> bool:
+    if ep in args.drop:
+        return False
     s = scores.get(ep)
     if s is None or s.get("parse_error"):
         return True
@@ -37,7 +40,7 @@ def keep(ep: int) -> bool:
 info = json.load(open(os.path.join(args.src, "meta", "info.json")))
 episodes = [json.loads(l) for l in open(os.path.join(args.src, "meta", "episodes.jsonl"))]
 kept = [e for e in episodes if keep(e["episode_index"])]
-print(f"[curate] {name}: keep {len(kept)}/{len(episodes)} episodes")
+print(f"[curate] {name}: keep {len(kept)}/{len(episodes)} episodes" + (f" (dropped by hand: {args.drop})" if args.drop else ""))
 
 if os.path.exists(args.dst):
     shutil.rmtree(args.dst)

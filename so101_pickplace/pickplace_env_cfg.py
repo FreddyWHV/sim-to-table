@@ -72,6 +72,9 @@ CUBE_SIZE = CUBE_SIZE_MM / 1000.0
 PAD_SIZE = (0.148, 0.105, 0.002)
 FLYER_POS = (float(os.environ.get("FLYER_X", "0.11")), float(os.environ.get("FLYER_Y", "-0.235")))
 FLYER_USD = os.path.join(ASSETS_DIR, "flyer", "flyer_a6.usda")
+# FLYER_FLIP=1 turns the printed side by 180 deg (QR code towards the front camera, as after the station rebuild)
+# (Isaac Lab 3.0 quaternions are x, y, z, w)
+FLYER_ROT = (0.0, 0.0, 1.0, 0.0) if os.environ.get("FLYER_FLIP") == "1" else (0.0, 0.0, 0.0, 1.0)
 
 # Workspace in the env frame [m]. The robot base is at the origin, rotated 90 deg about +Z so the
 # arm faces +X (same seat as the contrib stack task). Block spawns on the +Y half, pad on the -Y half.
@@ -212,7 +215,7 @@ class PickPlaceSceneCfg(InteractiveSceneCfg):
     )
     flyer = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Flyer",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[FLYER_POS[0], FLYER_POS[1], PAD_SIZE[2] + 0.0005]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[FLYER_POS[0], FLYER_POS[1], PAD_SIZE[2] + 0.0005], rot=FLYER_ROT),
         spawn=UsdFileCfg(usd_path=FLYER_USD),
     )
 
