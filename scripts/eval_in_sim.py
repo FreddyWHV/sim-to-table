@@ -66,7 +66,7 @@ with launch_simulation(env_cfg, args):
 
     def observation():
         state = rad_to_norm(robot.data.joint_pos.torch[0, jidx].cpu().numpy())
-        imgs = {k: c.data.output["rgb"][0, :, :, :3].cpu().numpy().astype(np.uint8) for k, c in cams.items()}
+        imgs = {k: c.data.output["rgb"].torch[0, :, :, :3].cpu().numpy().astype(np.uint8) for k, c in cams.items()}
         obs = {
             "video": {"front": np.ascontiguousarray(imgs["front"]), "wrist": np.ascontiguousarray(imgs["wrist"])},
             "state": {"single_arm": state[:5].astype(np.float32), "gripper": state[5:6].astype(np.float32)},
@@ -99,7 +99,7 @@ with launch_simulation(env_cfg, args):
                 q = torch.as_tensor(norm_to_rad(chunk[h]), device=env.device).unsqueeze(0)
                 env.step(q)
                 if rec is not None:
-                    rec.stdin.write(np.ascontiguousarray(cams["front"].data.output["rgb"][0, :, :, :3].cpu().numpy().astype(np.uint8)).tobytes())
+                    rec.stdin.write(np.ascontiguousarray(cams["front"].data.output["rgb"].torch[0, :, :, :3].cpu().numpy().astype(np.uint8)).tobytes())
                 t += 1
                 if bool(mdp.cube_dropped(env)[0]):
                     outcome = "dropped"

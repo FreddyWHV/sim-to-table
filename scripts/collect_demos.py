@@ -66,7 +66,7 @@ with launch_simulation(env_cfg, args):
         cube_b0 = mdp.object_pose_in_base(env, __import__("isaaclab.managers", fromlist=["SceneEntityCfg"]).SceneEntityCfg("cube"))[0].cpu().numpy()
         for t in range(args.max_steps):
             state = robot.data.joint_pos.torch[0, jidx].cpu().numpy()
-            images = {k: c.data.output["rgb"][0, :, :, :3].cpu().numpy().astype(np.uint8) for k, c in cams.items()}
+            images = {k: c.data.output["rgb"].torch[0, :, :, :3].cpu().numpy().astype(np.uint8) for k, c in cams.items()}
             action = policy.act()
             env.step(action)
             target = robot.data.joint_pos_target.torch[0, jidx].cpu().numpy()

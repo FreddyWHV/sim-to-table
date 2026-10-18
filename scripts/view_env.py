@@ -130,7 +130,7 @@ with launch_simulation(env_cfg, args):
 
     def save_images(tag: str):
         for cam in ("front", "wrist"):
-            img = env.scene[f"{cam}_cam"].data.output["rgb"][0, :, :, :3].cpu().numpy().astype(np.uint8)
+            img = env.scene[f"{cam}_cam"].data.output["rgb"].torch[0, :, :, :3].cpu().numpy().astype(np.uint8)
             imageio.imwrite(os.path.join(args.out_dir, f"{tag}_{cam}.png"), img)
 
     # hold the current pose for a few steps so the renderer settles, then save
