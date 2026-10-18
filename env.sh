@@ -22,7 +22,7 @@ export NUM_EPISODES="${NUM_EPISODES:-50}"
 
 # GR00T
 export BASE_MODEL=$GR00T_REPO/checkpoints/GR00T-N1.7-3B
-export MODALITY_CONFIG=$PROJECT_DIR/gr00t/so101_sim_config.py
+export MODALITY_CONFIG=${MODALITY_CONFIG:-$PROJECT_DIR/gr00t/so101_sim_config.py}
 export EMBODIMENT_TAG=NEW_EMBODIMENT
 export FINETUNE_OUTPUT="${FINETUNE_OUTPUT:-$WORK/finetune/$DATASET_NAME}"
 export CHECKPOINT="${CHECKPOINT:-}"           # set to $FINETUNE_OUTPUT/checkpoint-<N> for start_server.sh
