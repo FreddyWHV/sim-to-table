@@ -2,12 +2,18 @@
 
 NVIDIA × Nebius AI Builders Hackathon, Berlin, 18 Oct 2026. Code: https://github.com/FreddyWHV/sim-to-table (branch `sim-station`).
 
+## Where things are
+
+On GitHub (this branch): the code, `submission/manifest.json`, `submission/reason_scores.json` and
+`submission/curation.log`. The checkpoints (12 GB each) are too large for GitHub; `tools/make_submission.sh` assembles
+the full folder below on the Nebius VM (`~/work/submission/sim-to-table`).
+
 ## What is in this folder
 
 | Path | Content |
 |---|---|
-| `checkpoints/main` | Submitted checkpoint (`main_v2`): GR00T N1.7-3B post-trained on Isaac Sim + real teleop from both station layouts, curated with Cosmos 3 Reasoner |
-| `checkpoints/comparison` | Earlier run (`main`): first station layout only (30 mm cube, flyer at the old spot) |
+| `checkpoints/main` | Submitted checkpoint (`main_real`): GR00T N1.7-3B post-trained on the real teleop episodes of both station layouts, curated with Cosmos 3 Reasoner |
+| `checkpoints/comparison` | Earlier run (`main`): Isaac Sim + real teleop, first station layout only |
 | `manifest.json` | Episode counts per source and dataset sampling weights for both checkpoints |
 | `cosmos/reason_scores.json` | Cosmos 3 Reasoner (nvidia/Cosmos3-Nano) output for every episode video |
 | `cosmos/curation.log` | Effect of the curation rule per dataset |
@@ -32,11 +38,21 @@ NVIDIA × Nebius AI Builders Hackathon, Berlin, 18 Oct 2026. Code: https://githu
    `use_degrees=false` so joint units match the sim dataset, h264 video), converted from LeRobot v3 to v2.1 for GR00T.
    Two batches: `station_real` (first layout) and `station_real_v2` (rebuilt layout); together at most 50.
 4. **Train (Nebius VM).** GR00T N1.7-3B, LLM frozen, visual encoder + projector + diffusion head tuned, batch 16.
-   Real data is up-weighted by listing datasets several times in the GR00T mixture: in `main_v2` old sim 1x,
+   Real data is up-weighted by listing datasets several times in the GR00T mixture: in the intermediate `main_v2` run old sim 1x,
    new sim 2x, first real batch 4x, rebuilt-layout real batch 6x (see `manifest.json`).
    A planned no-curation ablation was dropped: the reasoner rejected no episode of the first batch, so it would have
    trained on identical data.
 5. **Evaluate.** `code/scripts/eval_real.py` runs the checkpoint on the real arm through the policy server.
+
+## What the real-arm test showed
+
+The sim + real checkpoints (`main`, and `main_v2` with the 40 mm sim batch) jittered on the real arm and drove it into
+poses outside the real data (elbow ≈ −110, shoulder lift ≈ +80). Comparing the dataset statistics explains it: the sim
+joint convention does not match the real arm (mean shoulder lift +15 in sim vs −33 real, elbow −3 vs +40, gripper 49 vs
+11 in the [−100, 100] units), so the sim frames teach a mirrored arm. With no time left to fit a sim→real joint mapping,
+the submitted checkpoint is trained on the 32 Cosmos-curated real episodes only (first batch 1x, rebuilt-layout batch 2x).
+Fixing the joint mapping in `scripts/hdf5_to_lerobot.py` / the collector is the first next step; the 40 mm sim episodes
+(`tools/collect_cube40.sh`, `cube40_a`, `cube40_b`) can then be reused.
 
 ## Not done
 

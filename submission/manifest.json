@@ -1,0 +1,55 @@
+{
+  "policy": "GR00T N1.7-3B post-trained (NEW_EMBODIMENT), cameras front + side, LeRobot v2.1 data",
+  "main_checkpoint": {
+    "run": "main_real",
+    "path": "checkpoints/main",
+    "source_checkpoint": "/home/ubuntu/work/finetune/main_real/checkpoint-500",
+    "episodes": {
+      "sim_isaac_raw": 0,
+      "cosmos_transfer_augmented": 0,
+      "real_teleop": 32
+    },
+    "total_episodes": 32,
+    "datasets": {
+      "station_real_curated": {
+        "episodes": 19,
+        "sampling_weight": 1
+      },
+      "station_real_v2_curated": {
+        "episodes": 13,
+        "sampling_weight": 2
+      }
+    },
+    "curation": "Cosmos 3 Reasoner (nvidia/Cosmos3-Nano) scored every episode video; rule: drop if grasp_success or placed_on_target is false or motion_clean < 3"
+  },
+  "comparison_checkpoint": {
+    "run": "main",
+    "path": "checkpoints/comparison",
+    "source_checkpoint": "/home/ubuntu/work/finetune/main/checkpoint-1500",
+    "episodes": {
+      "sim_isaac_raw": 120,
+      "cosmos_transfer_augmented": 0,
+      "real_teleop": 19
+    },
+    "total_episodes": 139,
+    "datasets": {
+      "flyer_c_curated": {
+        "episodes": 60,
+        "sampling_weight": 1
+      },
+      "flyer_d_curated": {
+        "episodes": 60,
+        "sampling_weight": 1
+      },
+      "station_real_curated": {
+        "episodes": 19,
+        "sampling_weight": 4
+      }
+    },
+    "curation": "Cosmos 3 Reasoner (nvidia/Cosmos3-Nano) scored every episode video; rule: drop if grasp_success or placed_on_target is false or motion_clean < 3"
+  },
+  "caps": {
+    "real_teleop_max": 50,
+    "total_max": 300
+  }
+}

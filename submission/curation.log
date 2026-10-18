@@ -1,0 +1,12 @@
+[curate] flyer_c: keep 60/60 episodes
+[curate] wrote /home/ubuntu/work/datasets/local/flyer_c_curated (60 episodes, 20080 frames)
+[curate] flyer_d: keep 60/60 episodes
+[curate] wrote /home/ubuntu/work/datasets/local/flyer_d_curated (60 episodes, 20121 frames)
+[curate] station_real: keep 19/19 episodes
+[curate] wrote /home/ubuntu/work/datasets/local/station_real_curated (19 episodes, 12298 frames)
+[curate] station_real_v2: keep 13/14 episodes (dropped by hand: [13])
+[curate] wrote /home/ubuntu/work/datasets/local/station_real_v2_curated (13 episodes, 7461 frames)
+[curate] cube40_a: keep 15/15 episodes
+[curate] wrote /home/ubuntu/work/datasets/local/cube40_a_curated (15 episodes, 5351 frames)
+[curate] cube40_b: keep 15/15 episodes
+[curate] wrote /home/ubuntu/work/datasets/local/cube40_b_curated (15 episodes, 5351 frames)

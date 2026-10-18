@@ -10,7 +10,8 @@ L=$DATASETS_DIR/local
 last_ckpt() { ls -d "$1"/checkpoint-* | sort -t- -k2 -n | tail -1; }
 # main = run with the second real batch (main_v2) when it exists; the comparison checkpoint is the earlier main.
 # Override with MAIN_RUN=... CMP_RUN=... (run names under $WORK/finetune, logs in logs/train_<run>.log).
-if [ -d "$WORK/finetune/main_v2" ]; then MAIN_RUN="${MAIN_RUN:-main_v2}" CMP_RUN="${CMP_RUN:-main}"
+if [ -d "$WORK/finetune/main_real" ]; then MAIN_RUN="${MAIN_RUN:-main_real}" CMP_RUN="${CMP_RUN:-main}"
+elif [ -d "$WORK/finetune/main_v2" ]; then MAIN_RUN="${MAIN_RUN:-main_v2}" CMP_RUN="${CMP_RUN:-main}"
 else MAIN_RUN="${MAIN_RUN:-main}" CMP_RUN="${CMP_RUN:-ablation}"; fi
 MAIN_CKPT="${MAIN_CKPT:-$(last_ckpt "$WORK/finetune/$MAIN_RUN")}"
 CMP_CKPT="${CMP_CKPT:-$(last_ckpt "$WORK/finetune/$CMP_RUN")}"
