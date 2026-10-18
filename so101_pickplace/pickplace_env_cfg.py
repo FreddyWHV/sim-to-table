@@ -1,7 +1,7 @@
 """SO-101 single-block pick-and-place environment for GR00T N1.7 post-training data.
 
 Scene: SO-101 follower inside the white hackathon light box (dimensions of ``lightbox-simple.usd``
-from isaac-sim/Sim-to-Real-SO-101-Workshop), one blue block, one flat green target pad and two
+from isaac-sim/Sim-to-Real-SO-101-Workshop), one blue block, the A6 flyer as placement target and two
 fixed cameras on the top edges of the box walls: ``front`` on the wall facing the arm, ``side`` on
 the wall to the arm's right. This replaces the starter repo's SeattleLab table and wrist camera so
 the scene matches the real station.
@@ -66,12 +66,16 @@ CUBE_SIZE_MM = int(os.environ.get("CUBE_SIZE_MM", "30"))
 CUBE_COLOR = os.environ.get("CUBE_COLOR", "blue")
 CUBE_USD = os.path.join(ASSETS_DIR, "cube_blocks", "usd", f"cube_{CUBE_SIZE_MM}mm_{CUBE_COLOR}.usda")
 CUBE_SIZE = CUBE_SIZE_MM / 1000.0
-PAD_SIZE = (0.09, 0.09, 0.004)
+# Target: the A6 flyer taped to the station floor (long side pointing into the box). Position read
+# off a top-down phone photo and the two camera views; physics uses an invisible cuboid of the same
+# footprint, the look comes from assets/flyer/flyer_a6.usda (photo texture).
+PAD_SIZE = (0.148, 0.105, 0.002)
+FLYER_POS = (float(os.environ.get("FLYER_X", "0.11")), float(os.environ.get("FLYER_Y", "-0.235")))
+FLYER_USD = os.path.join(ASSETS_DIR, "flyer", "flyer_a6.usda")
 
 # Workspace in the env frame [m]. The robot base is at the origin, rotated 90 deg about +Z so the
 # arm faces +X (same seat as the contrib stack task). Block spawns on the +Y half, pad on the -Y half.
 CUBE_POSE_RANGE = {"x": (0.16, 0.27), "y": (0.02, 0.13), "z": (CUBE_SIZE / 2, CUBE_SIZE / 2), "yaw": (-0.8, 0.8)}
-PAD_POSE_RANGE = {"x": (0.16, 0.27), "y": (-0.15, -0.04), "z": (PAD_SIZE[2] / 2, PAD_SIZE[2] / 2), "yaw": (0.0, 0.0)}
 
 # Seat pose (see contrib stack task for the derivation of the Z correction and 90 deg yaw).
 _SO101_MOUNT_Z = -0.03008
@@ -196,14 +200,20 @@ class PickPlaceSceneCfg(InteractiveSceneCfg):
     )
     target = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Target",
-        init_state=RigidObjectCfg.InitialStateCfg(pos=[0.21, -0.09, PAD_SIZE[2] / 2], rot=[0, 0, 0, 1]),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=[FLYER_POS[0], FLYER_POS[1], PAD_SIZE[2] / 2], rot=[0, 0, 0, 1]),
         spawn=sim_utils.CuboidCfg(
             size=PAD_SIZE,
+            visible=False,
             rigid_props=sim_utils.RigidBodyPropertiesCfg(kinematic_enabled=True, disable_gravity=True),
             collision_props=sim_utils.CollisionPropertiesCfg(),
             visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.7, 0.2), roughness=0.8),
             semantic_tags=[("class", "target")],
         ),
+    )
+    flyer = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/Flyer",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[FLYER_POS[0], FLYER_POS[1], PAD_SIZE[2] + 0.0005]),
+        spawn=UsdFileCfg(usd_path=FLYER_USD),
     )
 
     front_cam = CameraCfg(
@@ -248,11 +258,6 @@ class EventCfg:
         func=stack_events.randomize_object_pose,
         mode="reset",
         params={"pose_range": CUBE_POSE_RANGE, "min_separation": 0.0, "asset_cfgs": [SceneEntityCfg("cube")]},
-    )
-    randomize_target_pose = EventTerm(
-        func=stack_events.randomize_object_pose,
-        mode="reset",
-        params={"pose_range": PAD_POSE_RANGE, "min_separation": 0.0, "asset_cfgs": [SceneEntityCfg("target")]},
     )
 
 

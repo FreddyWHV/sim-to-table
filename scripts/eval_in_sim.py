@@ -18,7 +18,7 @@ from _common import PROJECT_ROOT, build_env_cfg, launch_simulation, make_parser,
 
 parser = make_parser(__doc__)
 parser.add_argument("--num_episodes", type=int, default=10)
-parser.add_argument("--task_text", type=str, default="pick up the blue block and place it on the green pad")
+parser.add_argument("--task_text", type=str, default="pick up the blue block and place it on the flyer")
 parser.add_argument("--policy_host", type=str, default="localhost")
 parser.add_argument("--policy_port", type=int, default=5555)
 parser.add_argument("--action_horizon", type=int, default=8, help="Predicted steps executed per policy query.")

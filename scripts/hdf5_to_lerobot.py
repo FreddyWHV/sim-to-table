@@ -25,7 +25,7 @@ from so101_pickplace.so101_units import FEATURE_NAMES, rad_to_norm  # noqa: E402
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--hdf5", required=True)
 parser.add_argument("--dataset_root", required=True)
-parser.add_argument("--task_text", default="pick up the blue block and place it on the green pad")
+parser.add_argument("--task_text", default="pick up the blue block and place it on the flyer")
 parser.add_argument("--state_key", default="obs/joint_pos")
 parser.add_argument("--action_key", default="obs/joint_pos_target", help="Fallback: 'actions' (raw action tensor).")
 parser.add_argument("--front_key", default="obs/front")

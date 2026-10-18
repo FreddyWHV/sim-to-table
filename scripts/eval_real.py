@@ -38,7 +38,7 @@ parser.add_argument("--side", required=True, help="OpenCV index or path of the s
 parser.add_argument("--policy_host", default="localhost")
 parser.add_argument("--policy_port", type=int, default=5555)
 parser.add_argument("--action_horizon", type=int, default=8, help="Predicted steps executed per policy query.")
-parser.add_argument("--task_text", default="pick up the blue block and place it on the green pad")
+parser.add_argument("--task_text", default="pick up the blue block and place it on the flyer")
 parser.add_argument("--timeout_s", type=float, default=120.0, help="Stop after this long (judges cap a trial at 2 min).")
 parser.add_argument("--max_relative_target", type=float, default=10.0, help="Per-step joint change cap (safety).")
 args = parser.parse_args()

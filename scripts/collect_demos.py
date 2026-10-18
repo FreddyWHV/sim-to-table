@@ -16,7 +16,7 @@ from _common import build_env_cfg, launch_simulation, make_parser, parse_args
 parser = make_parser(__doc__)
 parser.add_argument("--num_episodes", type=int, default=50, help="Successful episodes to record.")
 parser.add_argument("--dataset_root", type=str, required=True)
-parser.add_argument("--task_text", type=str, default="pick up the blue block and place it on the green pad")
+parser.add_argument("--task_text", type=str, default="pick up the blue block and place it on the flyer")
 parser.add_argument("--max_steps", type=int, default=600, help="Per-episode step cap (30 Hz).")
 parser.add_argument("--success_steps", type=int, default=15, help="Consecutive success steps before ending an episode.")
 parser.add_argument("--resume", action="store_true")
